@@ -1,5 +1,6 @@
 package com.test2.webcrawler;
 
+import com.test2.webcrawler.crwaling.service.WebCrawling;
 import kr.co.shineware.nlp.komoran.constant.DEFAULT_MODEL;
 import kr.co.shineware.nlp.komoran.core.Komoran;
 import kr.co.shineware.nlp.komoran.model.KomoranResult;
@@ -9,7 +10,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +23,8 @@ import java.util.Map;
 @SpringBootTest
 class WebcrawlerApplicationTests {
 
+    @Autowired
+    private WebCrawling webCrawling;
     @Test
     void contextLoads() {
         System.out.println("asd");
@@ -625,4 +630,9 @@ class WebcrawlerApplicationTests {
         }
     }
 
+    @Test
+    @Transactional
+    void 크롤러테스트(){
+        webCrawling.crawlerStater("pol");
+    }
 }

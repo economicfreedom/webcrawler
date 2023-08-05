@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
 @ToString
 @RequiredArgsConstructor
 public class RequestAndResponseVO implements ResponseFactory {
-    private final String id;
+
     private final String newsType;
     private final String request;
     private final String response;
     private final LocalDateTime createdAt;
+    private final Integer cloudId;
 }

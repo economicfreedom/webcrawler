@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface Morpheme  extends InsertInterface<MorphemeVO> {
+public interface Morpheme  extends DBInterface<MorphemeVO> {
 
     @Insert("INSERT INTO a_morph ( sub, category) VALUES (#{sub}, #{category})")
     @Override
