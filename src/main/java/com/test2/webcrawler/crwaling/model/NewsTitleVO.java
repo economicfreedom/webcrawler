@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @ToString
 @RequiredArgsConstructor
 public class NewsTitleVO {
-    private final String site;
     private final String newsTitle;
     private final LocalDateTime searchTime;
 

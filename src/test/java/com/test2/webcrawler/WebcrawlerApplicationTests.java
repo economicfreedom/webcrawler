@@ -631,8 +631,10 @@ class WebcrawlerApplicationTests {
     }
 
     @Test
-    @Transactional
     void 크롤러테스트(){
         webCrawling.crawlerStater("pol");
+        webCrawling.crawlerStater("eco");
+        webCrawling.crawlerStater("nav");
+        webCrawling.crawlerStater("sci");
     }
 }

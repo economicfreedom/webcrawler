@@ -9,12 +9,12 @@ import org.apache.ibatis.annotations.Select;
 public interface SocietyWordCloud extends DBInterface<CloudVO> {
 
     @Override
-    @Insert("INSERT INTO s_cloud (created_at, content1, content2, content3, content4, content5, content6, content7, content8, content9, content10) " +
+    @Insert("INSERT INTO s_cloud (create_at, content1, content2, content3, content4, content5, content6, content7, content8, content9, content10) " +
             "VALUES (#{createdAt}, #{content1}, #{content2}, #{content3}, #{content4}, #{content5}, #{content6}, #{content7}, #{content8}, #{content9}, #{content10})")
     void insert(CloudVO cloudVO);
 
     @Override
-    @Select("select max(id) from s_cloud )")
+    @Select("select max(id) from s_cloud ")
     Integer getMaxId();
 
 }

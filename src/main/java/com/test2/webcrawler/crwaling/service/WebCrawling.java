@@ -105,6 +105,8 @@ public class WebCrawling {
 
     @Value("${openai.api.url}")
     private String apiURL;
+    @Value("${gpt.prompt}")
+    private String prompt;
     private final RestTemplate template;
     // Cloud
     private final SocietyWordCloud societyWordCloud;
@@ -120,6 +122,10 @@ public class WebCrawling {
     private final GPTRequestAndResponse gptRequestAndResponse;
     private String siteLog;
     private String type;
+
+
+
+
 
 
     public WebCrawling(RestTemplate template
@@ -149,12 +155,28 @@ public class WebCrawling {
         pol : 정치
         eco : 경제
         nav : 사회
-        sci : 경제/과학
+        sci : it/과학
         */
     public void crawlerStater(String type) {
 
+
         this.type = type;
-        String url = "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1=100#&date=%2000:00:00&page=";
+        Byte naverUrl = null;
+        switch (type) {
+            case "pol":
+                naverUrl = 100;
+                break;
+            case "eco":
+                naverUrl = 101;
+                break;
+            case "nav":
+                naverUrl = 102;
+                break;
+            case "sci":
+                naverUrl = 105;
+                break;
+        }
+        String url = "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1="+naverUrl+"#&date=%2000:00:00&page=";
         Document document = null;
 
         StringBuffer naver = new StringBuffer();
@@ -221,7 +243,7 @@ public class WebCrawling {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        log.info("@!#@! ===> daum crawler start");
+        log.info("@!#@! ===> daum crawler done");
         Map<String, StringBuffer> portalSiteResult = new HashMap<>();
 
         portalSiteResult.put("naver", naver);
@@ -238,30 +260,29 @@ public class WebCrawling {
         log.info("#@!$@!$ == > morphologicalStarter start");
 
         StringBuffer naver = portalSiteResult.get("naver");
+        StringBuffer daum = portalSiteResult.get("daum");
 
-        morphological("네이버", naver);
+        String reulst = naver.toString() + daum.toString();
+
+        morphological(reulst);
 
         siteLog = "네이버";
 
-        log.info("!@#$@! === > call  naver morphological");
+        log.info("!@#$@! === > call  morphological");
 
-        StringBuffer daum = portalSiteResult.get("daum");
-
-        morphological("다음", daum);
-        log.info("!@#$@! === >  call daum morphological");
 
         log.info("#@!$@!$ == > morphologicalStarter done");
 
     }
 
 
-    private void morphological(String site, StringBuffer strToAnalyze) {
+    private void morphological(String strToAnalyze) {
         log.info("#!$@!!# === >" + siteLog + "morphological start");
 
         Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
         MorphemeVO morphemeVO;
 
-        KomoranResult analyzeResultList = komoran.analyze(strToAnalyze.toString());
+        KomoranResult analyzeResultList = komoran.analyze(strToAnalyze);
 
         List<String> list = new ArrayList<>();
         List<Token> tokenList = analyzeResultList.getTokenList();
@@ -276,33 +297,43 @@ public class WebCrawling {
             morpheme.insert(morphemeVO);
             insertBuffer.append(token.getMorph());
 
-            if (token.getMorph().equals("NNG")
-                    || token.getMorph().equals("NNP")
-                    || token.getMorph().equals("VV")
-                    || token.getMorph().equals("VA")) {
+            if (token.getPos().equals("NNG")
+                    || token.getPos().equals("NNP")
+                    || token.getPos().equals("VV")
+                    || token.getPos().equals("VA")) {
                 log.info("morph === >{} , post {} === >", token.getMorph(), token.getPos());
-                stringBuffer.append(token.getMorph() + " ");
+                stringBuffer.append(token.getMorph()).append(" ");
+                log.info(stringBuffer.toString());
             }
 
 
         }
 
-        NewsTitleVO newsTitleVO = new NewsTitleVO(site, insertNews.toString(), LocalDateTime.now());
+        NewsTitleVO newsTitleVO = newsTitleVO = new NewsTitleVO(stringBuffer.toString(), LocalDateTime.now());
+        ;
+        Integer maxId;
         switch (type) {
 
             case "pol":
+
+
                 insertNews.insertPoliticsTitle(newsTitleVO);
                 break;
             case "eco":
+
+
                 insertNews.insertEconomicTitle(newsTitleVO);
                 break;
 
             case "nav":
+
+
                 insertNews.insertItTitle(newsTitleVO);
 
                 break;
 
             case "sci":
+
                 insertNews.insertSocietyTitle(newsTitleVO);
                 break;
 
@@ -363,14 +394,12 @@ public class WebCrawling {
                 , list.get(9)
                 , LocalDateTime.now()
         );
-        String prompt = String.join(", ", list) + "이 단어들을 읽고 단어들이 " +
-                "긍정적 or 대체로 긍정적 or 중간 or 대체로 부정적 or 부정적 " +
-                "으로 이루어져 있는지만" + "하나만 짚어서 말해줘";
+        String prompt = String.join(", ", list) + "이 단어들을 읽고 단어들의 조합이 긍정적 or 대체로 긍정적 or 중간 or 대체로 부정적 or 부정적 으로 이루어져 있는지 하나만 짚어서 말해줘";
 
         ChatGptRequest request = new ChatGptRequest(model, prompt);
         ChatGptResponse chatGptResponse = template.postForObject(apiURL, request, ChatGptResponse.class);
         String response = chatGptResponse.getChoices().get(0).getMessage().getContent();
-
+        log.info("GPT의 답변 ==== >  {} ", response);
         Integer cloudId = null;
         switch (type) {
 
@@ -400,7 +429,7 @@ public class WebCrawling {
         RequestAndResponseVO requestAndResponseVO = new RequestAndResponseVO(type, prompt, response, LocalDateTime.now(), cloudId);
         gptRequestAndResponse.insert(requestAndResponseVO);
 
-        log.info("@#!$@!# === > saveCloud and");
+        log.info("@#!$@!# === > saveCloud end");
     }
 
 }
