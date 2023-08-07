@@ -16,7 +16,7 @@ gpt를 사용하기 위해서는 API키가 필요로 합니다.
 https://www.youtube.com/watch?v=HlDkuFy8xRM&t=1201s
 
 
-
+줄바꿈을 어떻게 하는지 모르겠네요 ㅠㅠ
 <h1>DB</h1>
 <span>create table a_morph
 (
@@ -148,3 +148,5 @@ create table society
 )
     collate = utf8mb4_unicode_ci;
 <br>
+
+
