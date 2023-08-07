@@ -18,7 +18,7 @@ https://www.youtube.com/watch?v=HlDkuFy8xRM&t=1201s
 
 
 <h1>DB</h1>
-create table a_morph
+<span>create table a_morph
 (
     sub      varchar(50) null,
     category varchar(50) null
@@ -42,6 +42,7 @@ create table e_cloud
         primary key
 )
     collate = utf8mb4_unicode_ci;
+    </span>
 <br>    
 
 create table economy
