@@ -24,7 +24,7 @@ create table a_morph
     category varchar(50) null
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table e_cloud
 (
     create_at datetime    not null,
@@ -42,6 +42,7 @@ create table e_cloud
         primary key
 )
     collate = utf8mb4_unicode_ci;
+<br>    
 
 create table economy
 (
@@ -51,7 +52,7 @@ create table economy
     search_time datetime null
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 
 create table i_cloud
 (
@@ -70,7 +71,7 @@ create table i_cloud
         primary key
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table it
 (
     i_id        int auto_increment
@@ -79,7 +80,7 @@ create table it
     search_time datetime null
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table p_cloud
 (
     create_at datetime    not null,
@@ -97,7 +98,7 @@ create table p_cloud
         primary key
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table politics
 (
     p_id        int auto_increment
@@ -106,7 +107,7 @@ create table politics
     search_time datetime null
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table request_and_response
 (
     id        int unsigned auto_increment
@@ -118,7 +119,7 @@ create table request_and_response
     cloud_id  int         not null
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table s_cloud
 (
     create_at datetime    not null,
@@ -136,7 +137,7 @@ create table s_cloud
         primary key
 )
     collate = utf8mb4_unicode_ci;
-
+<br>
 create table society
 (
     s_id        int auto_increment
@@ -145,3 +146,4 @@ create table society
     search_time datetime null
 )
     collate = utf8mb4_unicode_ci;
+<br>
