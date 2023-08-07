@@ -96,6 +96,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.zip.DataFormatException;
 
 @Service
 @Slf4j
@@ -149,8 +150,9 @@ public class WebCrawling {
     private String naverSearchType;
 
 
+
     /*
-        크롤링 스타트
+    크롤링을 위한 메소드
         @Param : 기사 종류
         pol : 정치
         eco : 경제
@@ -158,7 +160,7 @@ public class WebCrawling {
         sci : it/과학
         */
     public void crawlerStater(String type) {
-
+    //각 사이트마다 대략 200개의 뉴스제목을 불러옵니다.
 
         this.type = type;
         Byte naverUrl = null;
@@ -175,7 +177,10 @@ public class WebCrawling {
             case "sci":
                 naverUrl = 105;
                 break;
+            default:throw new IllegalArgumentException("pol,eco,nav,sci중 하나만 입력해주세요");
         }
+        /*네이버 크롤링
+        naver url 형식*/
         String url = "https://news.naver.com/main/main.naver?mode=LSD&mid=shm&sid1="+naverUrl+"#&date=%2000:00:00&page=";
         Document document = null;
 
@@ -184,9 +189,10 @@ public class WebCrawling {
         try {
             for (int i = 1; i <= 10; i++) {
                 document = Jsoup.connect(url + i).get();
+                //naver 뉴스기사 제목 html 클래스
                 Elements newsHead = document.getElementsByClass("sh_text_headline nclicks(cls_" + type + ".clsart)");
                 for (org.jsoup.nodes.Element element : newsHead) {
-
+                    //필요 없는 값들을 모두 제거하고 버퍼에 담음 ()나 []는 주로 뉴스회사명을 많이 집어넣음
                     naver.append(element.text().replaceAll("\\(.*?\\)", "").replaceAll("\\[.*?\\]", "").replaceAll("[^a-zA-Z0-9가-힣\\s]", ""));
 
                 }
@@ -197,6 +203,7 @@ public class WebCrawling {
         }
 
         log.info("@!#@! ===> naver crawler end ");
+        //daum url 형식을 위한 case문
         String daumUrl = "";
         switch (type) {
             case "pol":
@@ -219,11 +226,10 @@ public class WebCrawling {
 
         log.info("@!#@! ===> daum crawler start");
         url = "https://news.daum.net/breakingnews/" + daumUrl + "?page=";
-
+        /*daum 크롤링*/
 
         StringBuffer daum = new StringBuffer();
         try {
-
             for (int i = 1; i <= 10; i++) {
 
                 document = Jsoup.connect(url + i).get();
@@ -244,29 +250,25 @@ public class WebCrawling {
             e.printStackTrace();
         }
         log.info("@!#@! ===> daum crawler done");
-        Map<String, StringBuffer> portalSiteResult = new HashMap<>();
+        //더 이상 사용하지 않음
+//        Map<String, StringBuffer> portalSiteResult = new HashMap<>();
 
-        portalSiteResult.put("naver", naver);
+        daum.append(naver.toString());
 
-
-        portalSiteResult.put("daum", daum);
-
-        morphologicalStarter(portalSiteResult);
+        morphologicalStarter(daum);
 
         log.info("#@!$@!$ == >call morphologicalStarter");
     }
-
-    private void morphologicalStarter(Map<String, StringBuffer> portalSiteResult) {
+    /*기존에 map를 사용해서 할때 썻던 메소드 일단은 유지
+    매개변수만 StringBuffer로 바꾸고 사용*/
+    private void morphologicalStarter(StringBuffer portalSiteResult) {
         log.info("#@!$@!$ == > morphologicalStarter start");
 
-        StringBuffer naver = portalSiteResult.get("naver");
-        StringBuffer daum = portalSiteResult.get("daum");
 
-        String reulst = naver.toString() + daum.toString();
 
-        morphological(reulst);
+        morphological(portalSiteResult);
 
-        siteLog = "네이버";
+
 
         log.info("!@#$@! === > call  morphological");
 
@@ -275,28 +277,30 @@ public class WebCrawling {
 
     }
 
-
-    private void morphological(String strToAnalyze) {
+    /*Komoran을 사용한 형태소 분석을 위한 메소드*/
+    private void morphological(StringBuffer strToAnalyze) {
         log.info("#!$@!!# === >" + siteLog + "morphological start");
 
         Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
         MorphemeVO morphemeVO;
 
-        KomoranResult analyzeResultList = komoran.analyze(strToAnalyze);
+        KomoranResult analyzeResultList = komoran.analyze(strToAnalyze.toString());
 
         List<String> list = new ArrayList<>();
         List<Token> tokenList = analyzeResultList.getTokenList();
-
+        //클라우드에 필요한 문자만 담기 위한 StringBuffer
         StringBuffer stringBuffer = new StringBuffer();
-
+        //형태소 분석된 모든 데이터를 담기 위한 StringBuffer
         StringBuffer insertBuffer = new StringBuffer();
 
-
+        //형태소 분석된 데이터를 모두 꺼내옴
         for (Token token : tokenList) {
+
             morphemeVO = new MorphemeVO(token.getMorph(), token.getPos());
             morpheme.insert(morphemeVO);
             insertBuffer.append(token.getMorph());
 
+            //Word Cloud에 필요한 단어들만 추출해서 버퍼에 담음
             if (token.getPos().equals("NNG")
                     || token.getPos().equals("NNP")
                     || token.getPos().equals("VV")
@@ -308,37 +312,33 @@ public class WebCrawling {
 
 
         }
-
-        NewsTitleVO newsTitleVO = newsTitleVO = new NewsTitleVO(stringBuffer.toString(), LocalDateTime.now());
-        ;
-        Integer maxId;
+        //DB에 값을 전달하기 위한 VO객체
+        NewsTitleVO newsTitleVO = newsTitleVO = new NewsTitleVO(stringBuffer.toString(), LocalDateTime.now());;
+        //뉴스 타입별로 테이블에 저장
         switch (type) {
-
             case "pol":
-
-
+                log.info("#@!$@! 폴 인서트");
                 insertNews.insertPoliticsTitle(newsTitleVO);
                 break;
             case "eco":
-
-
+                log.info("#@!$@! 에코 인서트");
                 insertNews.insertEconomicTitle(newsTitleVO);
                 break;
 
             case "nav":
-
-
-                insertNews.insertItTitle(newsTitleVO);
+                log.info("#@!$@! 네브 인서트");
+                insertNews.insertSocietyTitle(newsTitleVO);
 
                 break;
 
             case "sci":
-
-                insertNews.insertSocietyTitle(newsTitleVO);
+                log.info("#@!$@! 스키 인서트");
+                insertNews.insertItTitle(newsTitleVO);
                 break;
 
         }
         log.info("#!@$@!# === > call wordCount");
+        //wordCount 호출
         wordCount(stringBuffer);
 
         log.info("#!$@!!# === > morphological done");
@@ -381,6 +381,7 @@ public class WebCrawling {
 
     private void saveCloud(List<String> list) {
         log.info("@#!$@!# === > saveCloud start");
+        //빈도수 1위부터 10위 까지 CloudVO에 저장
         CloudVO cloudVO = new CloudVO(
                 list.get(0)
                 , list.get(1)
@@ -394,13 +395,21 @@ public class WebCrawling {
                 , list.get(9)
                 , LocalDateTime.now()
         );
+
+        //promft
         String prompt = String.join(", ", list) + "이 단어들을 읽고 단어들의 조합이 긍정적 or 대체로 긍정적 or 중간 or 대체로 부정적 or 부정적 으로 이루어져 있는지 하나만 짚어서 말해줘";
 
+
+        //GPT API 호출
         ChatGptRequest request = new ChatGptRequest(model, prompt);
         ChatGptResponse chatGptResponse = template.postForObject(apiURL, request, ChatGptResponse.class);
         String response = chatGptResponse.getChoices().get(0).getMessage().getContent();
         log.info("GPT의 답변 ==== >  {} ", response);
         Integer cloudId = null;
+
+
+        /*뉴스제목 타입별로
+        1~10위 까지의 데이터 DB에 저장*/
         switch (type) {
 
             case "pol":
@@ -415,17 +424,21 @@ public class WebCrawling {
                 break;
 
             case "nav":
-                itWordCloud.insert(cloudVO);
-                cloudId = itWordCloud.getMaxId();
-                break;
-
-            case "sci":
                 societyWordCloud.insert(cloudVO);
                 cloudId = societyWordCloud.getMaxId();
                 break;
 
+            case "sci":
+                itWordCloud.insert(cloudVO);
+                cloudId = itWordCloud.getMaxId();
+                break;
+
 
         }
+        /*
+        작업을 다 끝내고
+        Request와 GPT의 Respnse와 DB에 저장
+        */
         RequestAndResponseVO requestAndResponseVO = new RequestAndResponseVO(type, prompt, response, LocalDateTime.now(), cloudId);
         gptRequestAndResponse.insert(requestAndResponseVO);
 
